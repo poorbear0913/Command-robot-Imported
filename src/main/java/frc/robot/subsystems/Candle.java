@@ -68,7 +68,6 @@ public class Candle extends SubsystemBase{
     public void Error(){
         candle.animate(Error);
     }
-
     
     @Override
     public void periodic(){
@@ -78,8 +77,6 @@ public class Candle extends SubsystemBase{
         double Tag_Area = LimelightHelpers.getTA("");
         double Tag_X = LimelightHelpers.getTX("");
 
-        double Output_X = SmartDashboard.getNumber("Output_X", 0);
-        double Output_Y = SmartDashboard.getNumber("Output_Y", 0);
         
         /** 
         if(Fiducial_ID == -1){
