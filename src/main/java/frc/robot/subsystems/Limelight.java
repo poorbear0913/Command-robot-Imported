@@ -31,6 +31,7 @@ public class Limelight extends SubsystemBase {
 
     public double getFiducialID() {
         double ID = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tid").getDouble(0);
+        SmartDashboard.putNumber("Fiducial ID", ID);
         return (ID >= 1 && ID <= 16) ? ID : 0;
     }
 
@@ -48,6 +49,7 @@ public class Limelight extends SubsystemBase {
 
     public void updateRobotPose(double x, double y, double angleDegrees) {
         robotPose = new Pose2d(x, y, Rotation2d.fromDegrees(angleDegrees));
+        SmartDashboard.putString("Robot Pose", robotPose.toString());
     }
 
     public void periodic() {
@@ -58,14 +60,14 @@ public class Limelight extends SubsystemBase {
     
         // 假設右下角的目標位置
         double targetX = 15.37;  // 右下角的 X 坐標
-        double targetY = 0.3;  // 右下角的 Y 坐標
+        double targetY = 0.5;  // 右下角的 Y 坐標
 
         // 使用 Limelight 數據來調整機器人位置
         double sensorX = robotPose.getX();
         double sensorY = robotPose.getY();
         double sensorAngle = robotPose.getRotation().getDegrees();
     
-        // 如果偵測到 AprilTag 1，將車子移動到右下角
+        // 如果偵測到 AprilTag 2，將車子移動到右下角
         if (ID == 2) {
             double deltaX = targetX - sensorX;  // 計算機器人與目標 X 之間的差距
             double deltaY = targetY - sensorY;  // 計算機器人與目標 Y 之間的差距
@@ -74,7 +76,7 @@ public class Limelight extends SubsystemBase {
             double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);  // 兩點之間的距離
             speed = 0.5;  // 設定前進的速度
     
-            if (distance > 0.1) {  // 如果距離大於閾值，繼續移動
+            if (distance > 0.01) {  // 如果距離大於閾值，繼續移動
                 double angleToTarget = Math.toDegrees(Math.atan2(deltaY, deltaX));  // 計算面向目標的角度
                 sensorAngle = angleToTarget;  // 更新機器人角度為目標角度
     
@@ -91,8 +93,10 @@ public class Limelight extends SubsystemBase {
             // 計算移動速度，這裡可以根據距離做調整
             double distance = Math.sqrt(deltaX1 * deltaX1 + deltaY1 * deltaY1);  // 兩點之間的距離
             speed = 0.5;  // 設定前進的速度
+            sensorX += speed * Math.cos(Math.toRadians(sensorAngle));
+            sensorY += speed * Math.sin(Math.toRadians(sensorAngle));
     
-            if (distance > 0.1) {  // 如果距離大於閾值，繼續移動
+            if (distance > 0.01) {  // 如果距離大於閾值，繼續移動
                 double angleToTarget = Math.toDegrees(Math.atan2(deltaY1, deltaX1));  // 計算面向目標的角度
                 sensorAngle = angleToTarget;  // 更新機器人角度為目標角度
     
@@ -100,9 +104,9 @@ public class Limelight extends SubsystemBase {
                 sensorX += speed * Math.cos(Math.toRadians(sensorAngle));  // 根據角度移動 X 坐標
                 sensorY += speed * Math.sin(Math.toRadians(sensorAngle));  // 根據角度移動 Y 坐標
             }
-        }else{ 
-            double targetX2 = 0.5;  // 右上角的 X 坐標
-            double targetY2 = 0.5;  // 右上角的 Y 坐標
+        } else { 
+            double targetX2 = 0.5;
+            double targetY2 = 0.5; 
             double deltaX2 = targetX2 - sensorX;  // 計算機器人與目標 X 之間的差距
             double deltaY2 = targetY2 - sensorY;  // 計算機器人與目標 Y 之間的差距
     
@@ -110,7 +114,7 @@ public class Limelight extends SubsystemBase {
             double distance = Math.sqrt(deltaX2 * deltaX2 + deltaY2 * deltaY2);  // 兩點之間的距離
             speed = 0.5;  // 設定前進的速度
     
-            if (distance > 0.1) {  // 如果距離大於閾值，繼續移動
+            if (distance > 0.01) {  // 如果距離大於閾值，繼續移動
                 double angleToTarget = Math.toDegrees(Math.atan2(deltaY2, deltaX2));  // 計算面向目標的角度
                 sensorAngle = angleToTarget;  // 更新機器人角度為目標角度
     
@@ -118,10 +122,18 @@ public class Limelight extends SubsystemBase {
                 sensorX += speed * Math.cos(Math.toRadians(sensorAngle));  // 根據角度移動 X 坐標
                 sensorY += speed * Math.sin(Math.toRadians(sensorAngle));  // 根據角度移動 Y 坐標
             }
-            
+
+            SmartDashboard.putNumber("Sensor X Before", sensorX);
+            SmartDashboard.putNumber("Sensor Y Before", sensorY);
+
+            // 更新機器人座標
+            sensorX += speed * Math.cos(Math.toRadians(sensorAngle));
+            sensorY += speed * Math.sin(Math.toRadians(sensorAngle));
+
+            SmartDashboard.putNumber("Sensor X After", sensorX);
+            SmartDashboard.putNumber("Sensor Y After", sensorY);
         }
         
-    
         // 限制機器人坐標範圍，確保不超出比賽場地
         sensorX = Math.max(0.5, Math.min(16.25, sensorX));
         sensorY = Math.max(0.5, Math.min(7.5, sensorY));
