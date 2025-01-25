@@ -32,7 +32,7 @@ public class Limelight extends SubsystemBase {
     public double getFiducialID() {
         double ID = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tid").getDouble(0);
         SmartDashboard.putNumber("Fiducial ID", ID);
-        return (ID >= 1 && ID <= 16) ? ID : 0;
+        return (ID >= 1 && ID <= 24) ? ID : 0;
     }
 
     public double getTA() {
@@ -104,7 +104,7 @@ public class Limelight extends SubsystemBase {
                 sensorX += speed * Math.cos(Math.toRadians(sensorAngle));  // 根據角度移動 X 坐標
                 sensorY += speed * Math.sin(Math.toRadians(sensorAngle));  // 根據角度移動 Y 坐標
             }
-        } else { 
+        } else {
             double targetX2 = 0.5;
             double targetY2 = 0.5; 
             double deltaX2 = targetX2 - sensorX;  // 計算機器人與目標 X 之間的差距
@@ -142,9 +142,11 @@ public class Limelight extends SubsystemBase {
         double X_A = 14.5;
         double X_B = 16.25;
         double m = (Y_B - Y_A) / (X_B - X_A);
-        double b = Y_A - m * X_A;  // 計算截距
+        double m_ = Math.round(m * 100.0) / 100.0;
+        double b = Y_A - m_ * X_A;  // 計算截距
+        double b_ = Math.round(b * 100.0) / 100.0;
 
-        if (sensorX >= X_A && sensorY <= (m * sensorX + b)) {
+        if (sensorX >= X_A && sensorY <= (m_ * sensorX + b_)) {
         // 機器人超過斜牆，調整角度或移動方向
         sensorAngle += 180;  // 例如，讓它反彈
         }
