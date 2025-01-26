@@ -1,5 +1,9 @@
 package frc.robot.subsystems;
 
+import javax.print.attribute.standard.MediaSize.NA;
+
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.PoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTable;
@@ -12,6 +16,35 @@ import frc.robot.Constants.LimelightConstants;
 
 public class Limelight extends SubsystemBase {
 
+    LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight");
+
+    private final PoseEstimator m_PoseEstimator = new PoseEstimator<>(null, null, null, null)
+
+    boolean doRejectUpdate = false;
+
+    if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1){
+      if(mt1.rawFiducials[0].ambiguity > .7)
+      {
+        doRejectUpdate = true;
+      }
+      if(mt1.rawFiducials[0].distToCamera > 3)
+      {
+        doRejectUpdate = true;
+      }
+    }
+    if(mt1.tagCount == 0)
+    {
+      doRejectUpdate = true;
+    }
+
+    if(!doRejectUpdate)
+    {
+        m_poseEstimate.setVisionMeasurementStdDevs(VecBuilder.fill(.5,.5,9999999));
+        m_poseEstimate.addVisionMeasurement(
+          mt1.pose,
+          mt1.timestampSeconds);
+    }
+
     private NetworkTable table = NetworkTableInstance.getDefault().getTable(LimelightConstants.Name);
     private Field2d field2d;
     private Pose2d robotPose;
@@ -21,7 +54,7 @@ public class Limelight extends SubsystemBase {
     private double tX;  // 目標水平偏移量 (度)
 
     private double speed = 0.1;        // 基本前進速度
-    private double angularSpeed = 15.0;  // 基本旋轉速度
+    private double angularSpeed = 15.0;   // 基本旋轉速度
 
     public Limelight() {
         field2d = new Field2d();
@@ -57,99 +90,11 @@ public class Limelight extends SubsystemBase {
         ID = getFiducialID();
         tA = getTA();
         tX = getTX();
-    
-        // 假設右下角的目標位置
-        double targetX = 15.37;  // 右下角的 X 坐標
-        double targetY = 0.5;  // 右下角的 Y 坐標
 
         // 使用 Limelight 數據來調整機器人位置
         double sensorX = robotPose.getX();
         double sensorY = robotPose.getY();
         double sensorAngle = robotPose.getRotation().getDegrees();
-    
-        // 如果偵測到 AprilTag 2，將車子移動到右下角
-        if (ID == 2) {
-            double deltaX = targetX - sensorX;  // 計算機器人與目標 X 之間的差距
-            double deltaY = targetY - sensorY;  // 計算機器人與目標 Y 之間的差距
-    
-            // 計算移動速度，這裡可以根據距離做調整
-            double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);  // 兩點之間的距離
-            speed = 0.5;  // 設定前進的速度
-    
-            if (distance > 0.01) {  // 如果距離大於閾值，繼續移動
-                double angleToTarget = Math.toDegrees(Math.atan2(deltaY, deltaX));  // 計算面向目標的角度
-                sensorAngle = angleToTarget;  // 更新機器人角度為目標角度
-    
-                // 根據目標位置更新機器人位置
-                sensorX += speed * Math.cos(Math.toRadians(sensorAngle));  // 根據角度移動 X 坐標
-                sensorY += speed * Math.sin(Math.toRadians(sensorAngle));  // 根據角度移動 Y 坐標
-            }
-        } else if (ID == 20) {
-            double targetX1 = 16.25;  // 右上角的 X 坐標
-            double targetY1 = 7.5;  // 右上角的 Y 坐標
-            double deltaX1 = targetX1 - sensorX;  // 計算機器人與目標 X 之間的差距
-            double deltaY1 = targetY1 - sensorY;  // 計算機器人與目標 Y 之間的差距
-    
-            // 計算移動速度，這裡可以根據距離做調整
-            double distance = Math.sqrt(deltaX1 * deltaX1 + deltaY1 * deltaY1);  // 兩點之間的距離
-            speed = 0.5;  // 設定前進的速度
-            sensorX += speed * Math.cos(Math.toRadians(sensorAngle));
-            sensorY += speed * Math.sin(Math.toRadians(sensorAngle));
-    
-            if (distance > 0.01) {  // 如果距離大於閾值，繼續移動
-                double angleToTarget = Math.toDegrees(Math.atan2(deltaY1, deltaX1));  // 計算面向目標的角度
-                sensorAngle = angleToTarget;  // 更新機器人角度為目標角度
-    
-                // 根據目標位置更新機器人位置
-                sensorX += speed * Math.cos(Math.toRadians(sensorAngle));  // 根據角度移動 X 坐標
-                sensorY += speed * Math.sin(Math.toRadians(sensorAngle));  // 根據角度移動 Y 坐標
-            }
-        } else {
-            double targetX2 = 0.5;
-            double targetY2 = 0.5; 
-            double deltaX2 = targetX2 - sensorX;  // 計算機器人與目標 X 之間的差距
-            double deltaY2 = targetY2 - sensorY;  // 計算機器人與目標 Y 之間的差距
-    
-            // 計算移動速度，這裡可以根據距離做調整
-            double distance = Math.sqrt(deltaX2 * deltaX2 + deltaY2 * deltaY2);  // 兩點之間的距離
-            speed = 0.5;  // 設定前進的速度
-    
-            if (distance > 0.01) {  // 如果距離大於閾值，繼續移動
-                double angleToTarget = Math.toDegrees(Math.atan2(deltaY2, deltaX2));  // 計算面向目標的角度
-                sensorAngle = angleToTarget;  // 更新機器人角度為目標角度
-    
-                // 根據目標位置更新機器人位置
-                sensorX += speed * Math.cos(Math.toRadians(sensorAngle));  // 根據角度移動 X 坐標
-                sensorY += speed * Math.sin(Math.toRadians(sensorAngle));  // 根據角度移動 Y 坐標
-            }
-
-            SmartDashboard.putNumber("Sensor X Before", sensorX);
-            SmartDashboard.putNumber("Sensor Y Before", sensorY);
-
-            // 更新機器人座標
-            sensorX += speed * Math.cos(Math.toRadians(sensorAngle));
-            sensorY += speed * Math.sin(Math.toRadians(sensorAngle));
-
-            SmartDashboard.putNumber("Sensor X After", sensorX);
-            SmartDashboard.putNumber("Sensor Y After", sensorY);
-        }
-        
-        // 限制機器人坐標範圍，確保不超出比賽場地
-        sensorX = Math.max(0.5, Math.min(16.25, sensorX));
-        sensorY = Math.max(0.5, Math.min(7.5, sensorY));
-        double Y_A = 0.5;
-        double Y_B = 1;
-        double X_A = 14.5;
-        double X_B = 16.25;
-        double m = (Y_B - Y_A) / (X_B - X_A);
-        double m_ = Math.round(m * 100.0) / 100.0;
-        double b = Y_A - m_ * X_A;  // 計算截距
-        double b_ = Math.round(b * 100.0) / 100.0;
-
-        if (sensorX >= X_A && sensorY <= (m_ * sensorX + b_)) {
-        // 機器人超過斜牆，調整角度或移動方向
-        sensorAngle += 180;  // 例如，讓它反彈
-        }
 
         // 更新機器人位置
         updateRobotPose(sensorX, sensorY, sensorAngle);
